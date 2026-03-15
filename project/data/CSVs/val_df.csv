@@ -1,0 +1,17 @@
+images files,labels files
+data/images/70.jpeg,data/labels/70.txt
+data/images/36.jpeg,data/labels/36.txt
+data/images/34.jpeg,data/labels/34.txt
+data/images/73.jpeg,data/labels/73.txt
+data/images/8.jpeg,data/labels/8.txt
+data/images/13.jpeg,data/labels/13.txt
+data/images/59.jpeg,data/labels/59.txt
+data/images/2.jpeg,data/labels/2.txt
+data/images/72.jpeg,data/labels/72.txt
+data/images/21.jpeg,data/labels/21.txt
+data/images/25.jpeg,data/labels/25.txt
+data/images/35.jpeg,data/labels/35.txt
+data/images/38.jpeg,data/labels/38.txt
+data/images/41.jpeg,data/labels/41.txt
+data/images/12.jpeg,data/labels/12.txt
+data/images/22.jpeg,data/labels/22.txt
