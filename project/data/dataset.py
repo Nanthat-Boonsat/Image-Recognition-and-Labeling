@@ -2,6 +2,7 @@ import torch
 from PIL import Image
 from torchvision.transforms.functional import to_tensor
 import os
+from utils1 import show_batch
 
 
 
@@ -23,13 +24,10 @@ class ObjDetectionDataset(torch.utils.data.Dataset):
             os.path.join(self.base_dir, path_value),
         ]
 
-        # Some CSVs store paths like "data/images/..." even when the actual
-        # folder is "images/..." under base_dir.
         if path_value.startswith("data/"):
             trimmed = path_value[len("data/"):]
             candidates.append(os.path.join(self.base_dir, trimmed))
 
-        # Return the first valid path candidate.
         for candidate in candidates:
             if os.path.exists(candidate):
                 return candidate
@@ -51,24 +49,24 @@ class ObjDetectionDataset(torch.utils.data.Dataset):
         image = to_tensor(img)
 
         boxes, labels = [], []
-        # Read YOLO labels: class x_center y_center width height (normalized).
         with open(label_path) as f:
             for line in f:
                 cls, xc, yc, bw, bh = map(float, line.split())
-            # Convert normalized YOLO coordinates to pixel corner coordinates.
                 x1 = (xc - bw/2) * w
                 y1 = (yc - bh/2) * h
                 x2 = (xc + bw/2) * w
                 y2 = (yc + bh/2) * h
                 boxes.append([x1, y1, x2, y2])
-                # Shift class index by +1 to reserve 0 for background.
                 labels.append(int(cls) + 1)
 
-        # Torchvision detection models expect this exact target dictionary shape.
         target = {
             "boxes": torch.tensor(boxes, dtype=torch.float32),
             "labels": torch.tensor(labels, dtype=torch.int64),
             "image_id": torch.tensor([idx]),
         }
-
         return image, target
+
+
+def preview_train_batch(train_loader):
+    images, targets = next(iter(train_loader))
+    show_batch(images, targets)

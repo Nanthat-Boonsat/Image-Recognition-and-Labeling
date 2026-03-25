@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 
 def save_learning_curve(train_losses, val_losses, outdir):
-    """Save a loss-vs-epoch figure and a CSV history for reporting."""
     epochs = list(range(1, len(train_losses) + 1))
 
     plt.figure(figsize=(8, 5))
@@ -29,14 +28,11 @@ def save_learning_curve(train_losses, val_losses, outdir):
             'val_loss': val_losses,
         }
     )
-    # CSV makes it easy to inspect values or re-plot later.
     history_df.to_csv(os.path.join(outdir, 'loss_history.csv'), index=False)
 
 def train_model(model, train_loader, val_loader, device):
-    """Train for multiple epochs, validate each epoch, and save outputs."""
     args = get_args()
     model = model.to(device)
-    # Adam optimizer usually converges faster for this project setup.
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
     best_val_loss = float('inf')
     train_losses = []
@@ -56,7 +52,6 @@ def train_model(model, train_loader, val_loader, device):
         print(f"Starting epoch {epoch + 1}/{args.epochs}...", flush=True)
         
         for batch_idx, (images, targets) in enumerate(train_loader, start=1):
-            # Move data to GPU/CPU before computing detection losses.
             images = [image.to(device=device, dtype=torch.float32) for image in images]
             targets = [
                 {
@@ -74,6 +69,7 @@ def train_model(model, train_loader, val_loader, device):
             
             running_loss += loss.item() * len(images)
 
+    
             if batch_idx % log_every == 0 or batch_idx == len(train_loader):
                 print(
                     f"Epoch {epoch + 1}/{args.epochs} | Batch {batch_idx}/{len(train_loader)} | "
@@ -81,17 +77,14 @@ def train_model(model, train_loader, val_loader, device):
                     flush=True,
                 )
             
-        # Epoch training loss averaged over all training samples.
         train_epoch_loss = running_loss / len(train_loader.dataset)
         
         val_loss = validate_model(model, val_loader, device)
         train_losses.append(train_epoch_loss)
         val_losses.append(val_loss)
 
-        # Keep only the checkpoint with the best validation loss.
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            # Save the best checkpoint using validation loss as the selection rule.
             torch.save(model.state_dict(), os.path.join(outdir, 'best_model.pth'))
             
         print(f"Epoch {epoch + 1}/{args.epochs} | "
@@ -104,14 +97,11 @@ def train_model(model, train_loader, val_loader, device):
 
 
 def validate_model(model, val_loader, device):
-    """Compute average validation loss without gradient updates."""
-    # Detection models return losses with targets in train mode.
     model.train()
     val_loss_sum = 0.0
     val_count = 0
     
     with torch.no_grad():
-        # Validation loop computes loss only (no backpropagation).
         for images, targets in val_loader:
             images = [image.to(device=device, dtype=torch.float32) for image in images]
             targets = [
