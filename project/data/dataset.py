@@ -3,15 +3,17 @@ from PIL import Image
 from torchvision.transforms.functional import to_tensor
 import os
 from utils1 import show_batch
+import augmentations as aug
 
 
 
 class ObjDetectionDataset(torch.utils.data.Dataset):
     """Dataset that reads image paths and YOLO label files from a DataFrame."""
 
-    def __init__(self, df, base_dir=None):
+    def __init__(self, df, base_dir=None, transforms=None):
         self.df = df.reset_index(drop=True)
         self.base_dir = base_dir or os.getcwd()
+        self.transforms = aug.Compose(transforms) if transforms else None
 
     def _resolve_path(self, path_value):
         """Resolve absolute or project-relative file paths from CSV values."""
@@ -44,9 +46,8 @@ class ObjDetectionDataset(torch.utils.data.Dataset):
         img_path = self._resolve_path(row["images files"])
         label_path = self._resolve_path(row["labels files"])
 
-        img = Image.open(img_path).convert("RGB")
-        w, h = img.size
-        image = to_tensor(img)
+        image = Image.open(img_path).convert("RGB")
+        w, h = image.size
 
         boxes, labels = [], []
         with open(label_path) as f:
@@ -60,10 +61,16 @@ class ObjDetectionDataset(torch.utils.data.Dataset):
                 labels.append(int(cls) + 1)
 
         target = {
-            "boxes": torch.tensor(boxes, dtype=torch.float32),
+            "boxes": torch.tensor(boxes, dtype=torch.float32).reshape(-1, 4),
             "labels": torch.tensor(labels, dtype=torch.int64),
             "image_id": torch.tensor([idx]),
         }
+
+        if self.transforms is not None:
+            image, target = self.transforms(image, target)
+        else:
+            image = to_tensor(image)
+
         return image, target
 
 

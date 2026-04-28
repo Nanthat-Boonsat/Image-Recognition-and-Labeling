@@ -228,6 +228,53 @@ class Resize:
         return image, _filter_target(target, new_w, new_h)
 
 
+class ResizeLongestSidePad:
+    def __init__(
+        self,
+        output_size: SizeType,
+        fill: Union[int, Tuple[int, int, int]] = 0,
+        interpolation: InterpolationMode = InterpolationMode.BILINEAR,
+    ):
+        self.output_size = output_size
+        self.fill = fill
+        self.interpolation = interpolation
+
+    def __call__(self, image, target=None):
+        target = _ensure_target(target)
+        old_w, old_h = _get_image_size(image)
+
+        if isinstance(self.output_size, int):
+            out_h = self.output_size
+            out_w = self.output_size
+        else:
+            out_h, out_w = int(self.output_size[0]), int(self.output_size[1])
+
+        scale = min(out_w / float(old_w), out_h / float(old_h))
+        new_w = max(1, int(round(old_w * scale)))
+        new_h = max(1, int(round(old_h * scale)))
+
+        image = F.resize(image, [new_h, new_w], interpolation=self.interpolation)
+
+        pad_left = (out_w - new_w) // 2
+        pad_top = (out_h - new_h) // 2
+        pad_right = out_w - new_w - pad_left
+        pad_bottom = out_h - new_h - pad_top
+        image = F.pad(image, [pad_left, pad_top, pad_right, pad_bottom], fill=self.fill)
+
+        boxes = target["boxes"]
+        if boxes.numel() > 0:
+            boxes = boxes.clone()
+            boxes[:, 0::2] *= scale
+            boxes[:, 1::2] *= scale
+            boxes[:, 0] += pad_left
+            boxes[:, 2] += pad_left
+            boxes[:, 1] += pad_top
+            boxes[:, 3] += pad_top
+            target["boxes"] = boxes
+
+        return image, _filter_target(target, out_w, out_h)
+
+
 class HorizontalFlip:
     def __init__(self, prob: float = 0.5):
         self.prob = prob
@@ -666,7 +713,7 @@ class Normalize:
 
 def build_train_transforms(image_size):
     return [
-        Resize((image_size, image_size)),
+        ResizeLongestSidePad((image_size, image_size)),
         HorizontalFlip(prob=0.5),
         OneOf(
             [
@@ -710,6 +757,6 @@ def build_train_transforms(image_size):
 
 def build_val_transforms(image_size):
     return [
-        Resize((image_size, image_size)),
+        ResizeLongestSidePad((image_size, image_size)),
         ToTensor(),
     ]

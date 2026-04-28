@@ -5,13 +5,12 @@ import torch.optim as optim
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
 def save_learning_curve(train_losses, val_losses, outdir):
     epochs = list(range(1, len(train_losses) + 1))
 
     plt.figure(figsize=(8, 5))
-    plt.plot(epochs, train_losses, label='Training Loss', marker='o', linewidth=2)
-    plt.plot(epochs, val_losses, label='Validation Loss', marker='o', linewidth=2)
+    plt.plot(epochs, train_losses, label='Training Loss (raw)', marker='o', linewidth=1.5, alpha=0.4)
+    plt.plot(epochs, val_losses, label='Validation Loss (raw)', marker='o', linewidth=1.5, alpha=0.4)
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.title('Learning Curve')

@@ -12,6 +12,7 @@ import os
 from torch.utils.data import DataLoader
 from model import build_model
 from trainer import train_model
+from augmentations import build_train_transforms, build_val_transforms
 
 
 
@@ -31,13 +32,14 @@ def main():
     train_df = pd.read_csv(os.path.join(csv_dir, "train_df.csv"))
     val_df = pd.read_csv(os.path.join(csv_dir, "val_df.csv"))
 
-    train_dataset = ObjDetectionDataset(train_df, base_dir=base_dir)
-    val_dataset = ObjDetectionDataset(val_df, base_dir=base_dir)
+    image_size = 640
+    train_dataset = ObjDetectionDataset(train_df, base_dir=base_dir, transforms=build_train_transforms(image_size))
+    val_dataset = ObjDetectionDataset(val_df, base_dir=base_dir, transforms=build_val_transforms(image_size))
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate, num_workers=0, pin_memory=torch.cuda.is_available())
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate, num_workers=0, pin_memory=torch.cuda.is_available())
 
-    preview_train_batch(train_loader)
+    preview_train_batch(val_loader)
 
     model = build_model(args.backbone)
 

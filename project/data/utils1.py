@@ -19,11 +19,12 @@ def resize_box_xyxy(box, old_w, old_h, new_w, new_h):
 def show_batch(images, targets):
     for i in range(len(images)):
         image = images[i].detach().cpu().permute(1, 2, 0).numpy()
+        display_image = image.clip(0.0, 1.0)
         boxes = targets[i]["boxes"].detach().cpu().numpy()
         labels = targets[i]["labels"].detach().cpu().numpy()
 
         fig, ax = plt.subplots(1, figsize=(8, 8))
-        ax.imshow(image)
+        ax.imshow(display_image)
 
         for box, label in zip(boxes, labels):
             x1, y1, x2, y2 = box
